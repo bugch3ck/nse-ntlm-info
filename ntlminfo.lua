@@ -6,9 +6,10 @@
 -- @copyright Same as Nmap--See http://nmap.org/book/man-legal.html
 -- @author = "Jonas Vestberg"
 --
--- Version 0.1
+-- Version 0.2
 -- Revisions
 -- 2013-04-30 - v0.1 - Published to github.com
+-- 2013-05-01 - v0.2 - Fixed timestamp issue on 32-bit systems.
 --     
 
 local bin = require "bin"
@@ -213,7 +214,9 @@ function parse_ntlm_chall (msg2)
 				if av_id == NTLM_MsvAvTimestamp then
 					local a,b
 					a,b = bin.unpack('<L',av_val)
-					local filetime_base = stdnse.date_to_timestamp({year=1601,month=1,day=1,hour=0,min=0,sec=0})
+					-- NOTE stdnse.date_to_timestamp / os.date can't handle dates older than 1901-12-13H21:45:52 on 32 bit systems.
+					-- This returns nil on a 32-bit system --> local filetime_base = stdnse.date_to_timestamp({year=1601,month=1,day=1,hour=0,min=0,sec=0})
+					local filetime_base = -11644473600 -- timestamp for 1601-01-01T00:00:00
 					av_val = stdnse.format_timestamp(filetime_base + b/10000000)
 				elseif av_id == NTLM_MsvAvFlags then
 					-- NOTE: Never seen, never tested.
